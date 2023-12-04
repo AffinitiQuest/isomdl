@@ -14,3 +14,8 @@ For example you can get the namespaces and elements defined in an mDL:
 ```bash
 cat test/stringified-mdl.txt | cargo run -- get-namespaces -
 ```
+
+Also, you can get the namespaces, and the claim names and values
+```bash
+cat test/stringified-mdl.txt| cargo run -- get-claims -
+```
