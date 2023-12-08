@@ -1,0 +1,72 @@
+{
+    "namespace": {
+        "org.iso.18013.5.1": {
+            "family_name":"Gallagher",
+            "given_name":"Warren",
+            "birth_date":"1963-02-04",
+            "issue_date":"2023-02-04",
+            "expiry_date":"2028-02-04",
+            "issuing_country":"CA",
+            "issuing_authority":"ON MTO",
+            "document_number":"G0290 77866 30204",
+            "portrait":"",
+            "driving_privileges":[
+              {
+                 "vehicle_category_code":"G",
+                 "issue_date":"1979-02-04",
+                 "expiry_date":"2028-02-04"
+              }            
+            ],
+            "un_distinguishing_sign":"CAN",
+            "administrative_number":"ABC123",
+            "sex":1,
+            "height":193,
+            "weight":92,
+            "eye_colour":"blue",
+            "hair_colour":"blonde",
+            "birth_place":"Canada",
+            "resident_address":"3289 Huntley Road",
+            "portrait_capture_date":"2020-01-01T12:00:00Z",
+            "age_in_years":60,
+            "age_birth_year":1963,
+            "age_over_18":true,
+            "age_over_21":true,
+            "issuing_jurisdiction":"CA-ON",
+            "nationality":"CA",
+            "resident_city":"Ottawa",
+            "resident_state":"Ontario",
+            "resident_postal_code":"K0A 2Z0",
+            "resident_country": "CA"
+        },
+        "org.iso.18013.5.1.aamva": {
+            "domestic_driving_privileges":[
+                {
+                  "domestic_vehicle_class":{
+                    "domestic_vehicle_class_code":"G",
+                    "domestic_vehicle_class_description":"unknown",
+                    "issue_date":"1979-02-04",
+                    "expiry_date":"2028-02-04"
+                  }
+                }
+            ],
+              "name_suffix":"1ST",
+              "organ_donor":1,
+              "veteran":1,
+              "family_name_truncation":"N",
+              "given_name_truncation":"N",
+              "aka_family_name.v2":"Gallagher",
+              "aka_given_name.v2":"Warren",
+              "aka_suffix":"I",
+              "weight_range":3,
+              "race_ethnicity":"AI",
+              "EDL_credential":1,
+              "sex":1,
+              "DHS_compliance":"F",
+              "resident_county":"001",
+              "hazmat_endorsement_expiration_date":"2024-01-30",
+              "CDL_indicator":1,
+              "DHS_compliance_text":"Compliant",
+              "DHS_temporary_lawful_status":1
+        }
+    }
+}

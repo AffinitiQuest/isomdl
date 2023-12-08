@@ -25,6 +25,11 @@ enum Action {
         /// Base64 encoded mDL in the format used in the issuance module of this crate.
         mdl: MaybeStdin<String>,
     },
+    // create a new mdoc based on a JSON string passed in on the command line
+    // CreateMdoc {
+    //     /// Base64 encoded mDL in the format used in the issuance module of this crate.
+    //     json: MaybeStdin<String>,
+    // },
 }
 
 fn main() -> Result<(), Error> {
@@ -35,6 +40,9 @@ fn main() -> Result<(), Error> {
         Action::GetClaims { mdl } => {
             print_claims(mdl.to_string())
         },
+        // Action::CreateMdoc { json } => {
+        //     create_mdoc_from_json_string( json.to_string())
+        // },
     }
 }
 
