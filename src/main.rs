@@ -43,9 +43,9 @@ fn issue_mdl( issue_command: IssueCommand ) -> Result<(), Error> {
                 println!("namespace={}", namespace);
                 let doc_type = String::from("org.iso.18013.5.1.mDL");
                 
-                let mdl_data = OrgIso1801351::from_json (value)         
-                    .unwrap()
-                    .to_ns_map();            
+                // let mdl_data = OrgIso1801351::from_json (value)         
+                //     .unwrap()
+                //     .to_ns_map();            
             }
         },
         __hidden => {}
