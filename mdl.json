@@ -1,8 +1,8 @@
 {
     "namespace": {
         "org.iso.18013.5.1": {
-            "family_name":"Brady",
-            "given_name":"Tkachuk",
+            "family_name":"Tkachuk",
+            "given_name":"Brady",
             "birth_date":"1999-09-16",
             "issue_date":"2023-09-16",
             "expiry_date":"2028-09-016",
@@ -58,7 +58,7 @@
               "aka_given_name.v2":"Brady",
               "aka_suffix":"I",
               "weight_range":3,
-              "race_ethnicity":"AI",
+              "race_ethnicity":"W",
               "EDL_credential":1,
               "sex":1,
               "DHS_compliance":"F",
