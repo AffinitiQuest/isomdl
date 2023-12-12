@@ -450,6 +450,94 @@ fn generate_digest_id(used_ids: &mut HashSet<DigestId>) -> DigestId {
     digest_id
 }
 
+// Added by wlg
+pub mod aq_issue {
+    use super::*;
+    use crate::definitions::device_key::cose_key::{CoseKey, EC2Curve, EC2Y};
+    use crate::definitions::namespaces::{
+        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva,
+    };
+
+    use crate::definitions::traits::{FromJson, ToNamespaceMap};
+    use elliptic_curve::sec1::ToEncodedPoint;
+    use p256::ecdsa::{Signature, SigningKey};
+    use p256::pkcs8::DecodePrivateKey;
+    use p256::SecretKey;
+    use time::OffsetDateTime;
+
+    static ISSUER_CERT: &[u8] = include_bytes!("../../test/issuance/issuer-cert.pem");
+    static ISSUER_KEY: &str = include_str!("../../test/issuance/issuer-key.pem");
+
+    pub fn aq_issue(isomdl_data: &serde_json::Value, aamva_isomdl_data: &serde_json::Value) -> anyhow::Result<Mdoc> {
+        let doc_type = String::from("org.iso.18013.5.1.mDL");
+        let isomdl_namespace = String::from("org.iso.18013.5.1");
+        let aamva_namespace = String::from("org.iso.18013.5.1.aamva");
+
+        let isomdl_data = OrgIso1801351::from_json(isomdl_data)
+            .unwrap()
+            .to_ns_map();
+        let aamva_data = OrgIso1801351Aamva::from_json(aamva_isomdl_data)
+            .unwrap()
+            .to_ns_map();
+
+        let namespaces = [
+            (isomdl_namespace, isomdl_data),
+            (aamva_namespace, aamva_data),
+        ]
+        .into_iter()
+        .collect();
+
+        let validity_info = ValidityInfo {
+            signed: OffsetDateTime::now_utc(),
+            valid_from: OffsetDateTime::now_utc(),
+            valid_until: OffsetDateTime::now_utc(),
+            expected_update: None,
+        };
+
+        let digest_algorithm = DigestAlgorithm::SHA256;
+
+        let der = include_str!("../../test/issuance/device_key.b64");
+        let der_bytes = base64::decode(der).unwrap();
+        let key = p256::SecretKey::from_sec1_der(&der_bytes).unwrap();
+        let pub_key = key.public_key();
+        let ec = pub_key.to_encoded_point(false);
+        let x = ec.x().unwrap().to_vec();
+        let y = EC2Y::Value(ec.y().unwrap().to_vec());
+        let device_key = CoseKey::EC2 {
+            crv: EC2Curve::P256,
+            x,
+            y,
+        };
+
+        let device_key_info = DeviceKeyInfo {
+            device_key,
+            key_authorizations: None,
+            key_info: None,
+        };
+
+        let mdoc_builder = Mdoc::builder()
+            .doc_type(doc_type)
+            .namespaces(namespaces)
+            .validity_info(validity_info)
+            .digest_algorithm(digest_algorithm)
+            .device_key_info(device_key_info);
+
+        let x5chain = X5Chain::builder()
+            .with_pem(ISSUER_CERT)
+            .unwrap()
+            .build()
+            .unwrap();
+        let signer: SigningKey = SecretKey::from_pkcs8_pem(ISSUER_KEY)
+            .expect("failed to parse pem")
+            .into();
+
+        Ok(mdoc_builder
+            .issue::<SigningKey, Signature>(x5chain, signer)
+            .expect("failed to issue mdoc"))
+    }
+
+}
+
 #[cfg(test)]
 pub mod test {
     use super::*;

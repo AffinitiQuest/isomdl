@@ -5,7 +5,7 @@
             "given_name":"Brady",
             "birth_date":"1999-09-16",
             "issue_date":"2023-09-16",
-            "expiry_date":"2028-09-016",
+            "expiry_date":"2028-09-16",
             "issuing_country":"CA",
             "issuing_authority":"ON MTO",
             "document_number":"Gxxxx xxxxx xxxxx",
@@ -13,7 +13,7 @@
             "driving_privileges":[
               {
                  "vehicle_category_code":"G",
-                 "issue_date":"192023-09-16",
+                 "issue_date":"2023-09-16",
                  "expiry_date":"2028-09-16"
               }            
             ],
@@ -21,11 +21,11 @@
             "administrative_number":"ABC123",
             "sex":1,
             "height":193,
-            "weight":92,
+            "weight":100,
             "eye_colour":"blue",
-            "hair_colour":"blonde",
+            "hair_colour":"blond",
             "birth_place":"Canada",
-            "resident_address":"3289 Huntley Road",
+            "resident_address":"1000 Palladium Drive",
             "portrait_capture_date":"2020-01-01T12:00:00Z",
             "age_in_years":24,
             "age_birth_year":1999,
@@ -35,7 +35,7 @@
             "nationality":"US",
             "resident_city":"Ottawa",
             "resident_state":"Ontario",
-            "resident_postal_code":"K0A 2Z0",
+            "resident_postal_code":"K2V 1A5",
             "resident_country": "CA"
         },
         "org.iso.18013.5.1.aamva": {

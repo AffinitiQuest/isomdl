@@ -12,12 +12,8 @@ use std::{
     io::{BufWriter, Write}
 };
 
-use isomdl::definitions::traits::{FromJson, ToNamespaceMap};
-use isomdl::definitions::namespaces::org_iso_18013_5_1::OrgIso1801351;
-
 fn main() -> Result<(), Error> {
     let args : IsoMdlArgs = IsoMdlArgs::parse();
-    println!("{:?}", args);
 
     match args.subcommand {
         IsoMdlCommand::Issue(issue_command) => {
@@ -33,92 +29,18 @@ fn issue_mdl( issue_command: IssueCommand ) -> Result<(), Error> {
     let content = std::fs::read_to_string(&issue_command.input_filename)
         .context(format!("could not read input_filename {}", &issue_command.input_filename))?;
 
-    let v: JsonValue = serde_json::from_str(&content)?;
-    // iterate over the namespaces
-    let namespaces: &JsonValue = &v["namespace"];
-    match namespaces {
-        JsonValue::Object(o) => {
-            for namespace in o.keys() {
-                let value = o.get_key_value(namespace);
-                println!("namespace={}", namespace);
-                let doc_type = String::from("org.iso.18013.5.1.mDL");
-                
-                // let mdl_data = OrgIso1801351::from_json (value)         
-                //     .unwrap()
-                //     .to_ns_map();            
-            }
-        },
-        __hidden => {}
+    let parsed_json: JsonValue = serde_json::from_str(&content)?;
+
+    let isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1"];
+    let aamva_isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1.aamva"];
+
+    if Some(isomdl_data).is_some() && Some(aamva_isomdl_data).is_some() {
+        let mdoc = isomdl::issuance::mdoc::aq_issue::aq_issue(&isomdl_data, &aamva_isomdl_data);
+        println!("{:?}", mdoc);
     }
 
     Ok(())
-    // let out_writer = match issue_command.output_filename {
-    //     Some(x) => {
-    //         let path = Path::new(&x);
-    //         Box::new(File::create(&path).unwrap()) as Box<dyn Write>
-    //     }
-    //     None => Box::new(std::io::stdout()) as Box<dyn Write>,
-    // };
-
-    // let mut buf = BufWriter::new(out_writer);
-    // writeln!(buf, "{:?}", &content)
-    //     .context("Error writing to output file")
 }
-
-// fn minimal_mdoc_builder() -> Builder {
-//     let doc_type = String::from("org.iso.18013.5.1.mDL");
-//     let isomdl_namespace = String::from("org.iso.18013.5.1");
-//     let aamva_namespace = String::from("org.iso.18013.5.1.aamva");
-
-//     let isomdl_data = OrgIso1801351::from_json(&isomdl_data())
-//         .unwrap()
-//         .to_ns_map();
-//     let aamva_data = OrgIso1801351Aamva::from_json(&aamva_isomdl_data())
-//         .unwrap()
-//         .to_ns_map();
-
-//     let namespaces = [
-//         (isomdl_namespace, isomdl_data),
-//         (aamva_namespace, aamva_data),
-//     ]
-//     .into_iter()
-//     .collect();
-
-//     let validity_info = ValidityInfo {
-//         signed: OffsetDateTime::now_utc(),
-//         valid_from: OffsetDateTime::now_utc(),
-//         valid_until: OffsetDateTime::now_utc(),
-//         expected_update: None,
-//     };
-
-//     let digest_algorithm = DigestAlgorithm::SHA256;
-
-//     let der = include_str!("../../test/issuance/device_key.b64");
-//     let der_bytes = base64::decode(der).unwrap();
-//     let key = p256::SecretKey::from_sec1_der(&der_bytes).unwrap();
-//     let pub_key = key.public_key();
-//     let ec = pub_key.to_encoded_point(false);
-//     let x = ec.x().unwrap().to_vec();
-//     let y = EC2Y::Value(ec.y().unwrap().to_vec());
-//     let device_key = CoseKey::EC2 {
-//         crv: EC2Curve::P256,
-//         x,
-//         y,
-//     };
-
-//     let device_key_info = DeviceKeyInfo {
-//         device_key,
-//         key_authorizations: None,
-//         key_info: None,
-//     };
-
-//     Mdoc::builder()
-//         .doc_type(doc_type)
-//         .namespaces(namespaces)
-//         .validity_info(validity_info)
-//         .digest_algorithm(digest_algorithm)
-//         .device_key_info(device_key_info)
-// }
 
 
 fn verify_mdl( verify_command: VerifyCommand ) -> Result<(), Error> {
