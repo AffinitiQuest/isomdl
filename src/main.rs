@@ -35,8 +35,15 @@ fn issue_mdl( issue_command: IssueCommand ) -> Result<(), Error> {
     let aamva_isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1.aamva"];
 
     if Some(isomdl_data).is_some() && Some(aamva_isomdl_data).is_some() {
-        let mdoc = isomdl::issuance::mdoc::aq_issue::aq_issue(&isomdl_data, &aamva_isomdl_data);
-        println!("{:?}", mdoc);
+        let out_writer = match issue_command.output_filename {
+            Some(x) => {
+                let path = Path::new(&x);
+                Box::new(File::create(&path).unwrap()) as Box<dyn Write>
+            }
+            None => Box::new(std::io::stdout()) as Box<dyn Write>,
+        };
+        let buf = BufWriter::new(out_writer);
+        let _ = isomdl::issuance::mdoc::aq_issue::aq_issue(&isomdl_data, &aamva_isomdl_data, buf);
     }
 
     Ok(())
