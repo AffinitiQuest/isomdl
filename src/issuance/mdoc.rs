@@ -539,6 +539,7 @@ pub mod aq_issue {
         let mdoc = mdoc_builder
             .issue::<SigningKey, Signature>(x5chain, signer)
             .expect("failed to issue mdoc");
+
         let vec = serde_cbor::to_vec(&mdoc);
         let str = encode(vec.unwrap());
         writeln!(output_buffer, "{}", str)

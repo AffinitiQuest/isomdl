@@ -38,6 +38,10 @@ fn issue_mdl( issue_command: IssueCommand ) -> Result<(), Error> {
         let out_writer = match issue_command.output_filename {
             Some(x) => {
                 let path = Path::new(&x);
+                if path.exists() {
+                    eprintln!("EEXIST=17 output_filename  \"{}\" already exists", path.to_string_lossy());
+                    std::process::exit(17);
+                }
                 Box::new(File::create(&path).unwrap()) as Box<dyn Write>
             }
             None => Box::new(std::io::stdout()) as Box<dyn Write>,
@@ -57,7 +61,11 @@ fn verify_mdl( verify_command: VerifyCommand ) -> Result<(), Error> {
     let out_writer = match verify_command.output_filename {
         Some(x) => {
             let path = Path::new(&x);
-            Box::new(File::create(&path).unwrap()) as Box<dyn Write>
+            if path.exists() {
+                eprintln!("EEXIST=17 output_filename \"{}\" already exists", path.to_string_lossy());
+                std::process::exit(17);
+            }
+        Box::new(File::create(&path).unwrap()) as Box<dyn Write>
         }
         None => Box::new(std::io::stdout()) as Box<dyn Write>,
     };

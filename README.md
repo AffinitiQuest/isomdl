@@ -10,12 +10,12 @@ This crate contains a CLI tool. Run the `--help` command to see what actions you
 cargo run -- --help
 ```
 
-For example you can get the namespaces and elements defined in an mDL:
+For example you can verify a supplied mdl and dump out it's claims:
 ```bash
-cat test/stringified-mdl.txt | cargo run -- get-namespaces -
+cargo run -- verify test/stringified-mdl.txt
 ```
 
-Also, you can get the namespaces, and the claim names and values
+Also, issue a new mdl from a supplied json description
 ```bash
-cat test/stringified-mdl.txt| cargo run -- get-claims -
+cargo run -- issue mdl.json
 ```
