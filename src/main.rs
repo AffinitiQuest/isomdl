@@ -4,7 +4,7 @@ use clap::Parser;
 use isomdl::presentation::{device::Document, Stringify};
 use serde_cbor::Value as CborValue;
 mod args;
-use args::{IsoMdlArgs, IsoMdlCommand, IssueCommand, VerifyCommand};
+use args::{IsoMdlArgs, IsoMdlCommand, IssueCommand, VerifyCommand, IssueVerifyCommand};
 use serde_json::Value as JsonValue;
 use std::{
     path::Path,
@@ -21,6 +21,9 @@ fn main() -> Result<(), Error> {
         },
         IsoMdlCommand::Verify(verify_command) => {
             verify_mdl(verify_command)
+        }
+        IsoMdlCommand::IssueVerify(issue_verify_command) => {
+            issue_verify_mdl(issue_verify_command)
         }
     }
 }
@@ -71,6 +74,37 @@ fn verify_mdl( verify_command: VerifyCommand ) -> Result<(), Error> {
     };
     let buf = BufWriter::new(out_writer);
     print_claims(content, buf)
+}
+
+fn issue_verify_mdl( issue_verify_command: IssueVerifyCommand ) -> Result<(), Error> {
+    let content = std::fs::read_to_string(&issue_verify_command.input_filename)
+        .context(format!("could not read input_filename {}", &issue_verify_command.input_filename))?;
+
+    let parsed_json: JsonValue = serde_json::from_str(&content)?;
+
+    let isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1"];
+    let aamva_isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1.aamva"];
+
+    if Some(isomdl_data).is_some() && Some(aamva_isomdl_data).is_some() {
+        let buf = BufWriter::new(Box::new(std::io::stdout()) as Box<dyn Write>);
+        let issued = isomdl::issuance::mdoc::aq_issue::aq_issue(&isomdl_data, &aamva_isomdl_data, buf);
+        let out_writer = match issue_verify_command.output_filename {
+            Some(x) => {
+                let path = Path::new(&x);
+                if path.exists() {
+                    eprintln!("EEXIST=17 output_filename \"{}\" already exists", path.to_string_lossy());
+                    std::process::exit(17);
+                }
+            Box::new(File::create(&path).unwrap()) as Box<dyn Write>
+            }
+            None => Box::new(std::io::stdout()) as Box<dyn Write>,
+        };
+        let buf = BufWriter::new(out_writer);
+        let _ = print_claims(issued.unwrap(), buf)
+            .context("Error printing claims");
+        }
+
+    Ok(())
 }
 
 fn print_claims(mdl: String, mut output_buffer: BufWriter<Box<dyn Write>>) -> Result<(), Error> {

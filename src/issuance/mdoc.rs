@@ -464,16 +464,17 @@ pub mod aq_issue {
     use p256::pkcs8::DecodePrivateKey;
     use p256::SecretKey;
     use time::OffsetDateTime;
-    use base64::encode;
     use std::io::{
         BufWriter, Write
     };
     use anyhow::{Context, Error} ;
+    use crate::presentation::device::Document;
+    use crate::presentation::Stringify;
 
     static ISSUER_CERT: &[u8] = include_bytes!("../../test/issuance/issuer-cert.pem");
     static ISSUER_KEY: &str = include_str!("../../test/issuance/issuer-key.pem");
 
-    pub fn aq_issue(isomdl_data: &serde_json::Value, aamva_isomdl_data: &serde_json::Value, mut output_buffer: BufWriter<Box<dyn Write>>) ->Result<(),Error> {
+    pub fn aq_issue(isomdl_data: &serde_json::Value, aamva_isomdl_data: &serde_json::Value, mut output_buffer: BufWriter<Box<dyn Write>>) ->Result<String,Error> {
         let doc_type = String::from("org.iso.18013.5.1.mDL");
         let isomdl_namespace = String::from("org.iso.18013.5.1");
         let aamva_namespace = String::from("org.iso.18013.5.1.aamva");
@@ -540,11 +541,12 @@ pub mod aq_issue {
             .issue::<SigningKey, Signature>(x5chain, signer)
             .expect("failed to issue mdoc");
 
-        let vec = serde_cbor::to_vec(&mdoc);
-        let str = encode(vec.unwrap());
-        writeln!(output_buffer, "{}", str)
+        let document = Document::from(mdoc.clone());
+        let stringified = Document::stringify(&document).unwrap();
+
+        write!(output_buffer, "{}", stringified)
             .context("Error writing issued mdl to file")?;
-        Ok(())
+        Ok(stringified)
         
     }
 
