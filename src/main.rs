@@ -34,23 +34,21 @@ fn issue_mdl( issue_command: IssueCommand ) -> Result<(), Error> {
 
     let parsed_json: JsonValue = serde_json::from_str(&content)?;
 
-    let isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1"];
-    let aamva_isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1.aamva"];
-
-    if Some(isomdl_data).is_some() && Some(aamva_isomdl_data).is_some() {
-        let out_writer = match issue_command.output_filename {
-            Some(x) => {
-                let path = Path::new(&x);
-                if path.exists() {
-                    eprintln!("EEXIST=17 output_filename  \"{}\" already exists", path.to_string_lossy());
-                    std::process::exit(17);
-                }
-                Box::new(File::create(&path).unwrap()) as Box<dyn Write>
+    let out_writer = match issue_command.output_filename {
+        Some(x) => {
+            let path = Path::new(&x);
+            if path.exists() {
+                eprintln!("EEXIST=17 output_filename  \"{}\" already exists", path.to_string_lossy());
+                std::process::exit(17);
             }
-            None => Box::new(std::io::stdout()) as Box<dyn Write>,
-        };
-        let buf = BufWriter::new(out_writer);
-        let _ = isomdl::issuance::mdoc::aq_issue::aq_issue(&isomdl_data, &aamva_isomdl_data, buf);
+            Box::new(File::create(&path).unwrap()) as Box<dyn Write>
+        }
+        None => Box::new(std::io::stdout()) as Box<dyn Write>,
+    };
+    let buf = BufWriter::new(out_writer);
+    let issued_result = isomdl::issuance::mdoc::aq_issue::aq_issue(&parsed_json, buf);
+    if issued_result.is_err() {
+        eprintln!("Error {:?}", issued_result.unwrap_err());
     }
 
     Ok(())
@@ -82,27 +80,22 @@ fn issue_verify_mdl( issue_verify_command: IssueVerifyCommand ) -> Result<(), Er
 
     let parsed_json: JsonValue = serde_json::from_str(&content)?;
 
-    let isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1"];
-    let aamva_isomdl_data: &JsonValue = &parsed_json["namespace"]["org.iso.18013.5.1.aamva"];
-
-    if Some(isomdl_data).is_some() && Some(aamva_isomdl_data).is_some() {
-        let buf = BufWriter::new(Box::new(std::io::stdout()) as Box<dyn Write>);
-        let issued = isomdl::issuance::mdoc::aq_issue::aq_issue(&isomdl_data, &aamva_isomdl_data, buf);
-        let out_writer = match issue_verify_command.output_filename {
-            Some(x) => {
-                let path = Path::new(&x);
-                if path.exists() {
-                    eprintln!("EEXIST=17 output_filename \"{}\" already exists", path.to_string_lossy());
-                    std::process::exit(17);
-                }
-            Box::new(File::create(&path).unwrap()) as Box<dyn Write>
+    let buf = BufWriter::new(Box::new(std::io::stdout()) as Box<dyn Write>);
+    let issued = isomdl::issuance::mdoc::aq_issue::aq_issue(&parsed_json, buf);
+    let out_writer = match issue_verify_command.output_filename {
+        Some(x) => {
+            let path = Path::new(&x);
+            if path.exists() {
+                eprintln!("EEXIST=17 output_filename \"{}\" already exists", path.to_string_lossy());
+                std::process::exit(17);
             }
-            None => Box::new(std::io::stdout()) as Box<dyn Write>,
-        };
-        let buf = BufWriter::new(out_writer);
-        let _ = print_claims(issued.unwrap(), buf)
-            .context("Error printing claims");
+        Box::new(File::create(&path).unwrap()) as Box<dyn Write>
         }
+        None => Box::new(std::io::stdout()) as Box<dyn Write>,
+    };
+    let buf = BufWriter::new(out_writer);
+    let _ = print_claims(issued.unwrap(), buf)
+        .context("Error printing claims");
 
     Ok(())
 }
@@ -111,9 +104,11 @@ fn print_claims(mdl: String, mut output_buffer: BufWriter<Box<dyn Write>>) -> Re
 
     let parsed = Document::parse(mdl).context("could not parse mdl");
     let namespaces = parsed?.namespaces;
+    writeln!(output_buffer, "")
+        .context("Error writing to output file")?;
     for namespace in namespaces.into_inner() {
         let namespace_name = namespace.0;
-        writeln!(output_buffer, "namespace={:#?}", namespace_name)
+        writeln!(output_buffer, "namespace={:#?}\n{{", namespace_name)
             .context("Error writing to output file")?;
         for key in namespace.1.into_inner() {
             let key_name = key.0;
@@ -126,6 +121,8 @@ fn print_claims(mdl: String, mut output_buffer: BufWriter<Box<dyn Write>>) -> Re
                     .context("Error writing to output file")?;
             }
         }
+        writeln!(output_buffer, "}}")
+            .context("Error writing to output file")?;
     }
     
     Ok(())

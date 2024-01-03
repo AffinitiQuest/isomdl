@@ -26,7 +26,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'isomdl'",
+            "name": "Debug 'isomdl' issue",
             "cargo": {
                 "args": [
                     "build",
@@ -39,6 +39,24 @@
                 }
             },
             "args": ["issue", "mdl.json"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug 'isomdl' verify",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=isomdl",
+                    "--package=isomdl"
+                ],
+                "filter": {
+                    "name": "isomdl",
+                    "kind": "bin"
+                }
+            },
+            "args": ["verify", "test/stringified-mdl.txt"],
             "cwd": "${workspaceFolder}"
         },
         {

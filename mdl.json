@@ -1,72 +1,86 @@
 {
-    "namespace": {
-        "org.iso.18013.5.1": {
-            "family_name":"Tkachuk",
-            "given_name":"Brady",
-            "birth_date":"1999-09-16",
-            "issue_date":"2023-09-16",
-            "expiry_date":"2028-09-16",
-            "issuing_country":"CA",
-            "issuing_authority":"ON MTO",
-            "document_number":"Gxxxx xxxxx xxxxx",
-            "portrait":"",
-            "driving_privileges":[
-              {
-                 "vehicle_category_code":"G",
-                 "issue_date":"2023-09-16",
-                 "expiry_date":"2028-09-16"
-              }            
-            ],
-            "un_distinguishing_sign":"CAN",
-            "administrative_number":"ABC123",
-            "sex":1,
-            "height":193,
-            "weight":100,
-            "eye_colour":"blue",
-            "hair_colour":"brown",
-            "birth_place":"Canada",
-            "resident_address":"1000 Palladium Drive",
-            "portrait_capture_date":"2020-01-01T12:00:00Z",
-            "age_in_years":24,
-            "age_birth_year":1999,
-            "age_over_18":true,
-            "age_over_21":true,
-            "issuing_jurisdiction":"CA-ON",
-            "nationality":"US",
-            "resident_city":"Ottawa",
-            "resident_state":"Ontario",
-            "resident_postal_code":"K2V 1A5",
-            "resident_country": "CA"
+    "doc_type": "org.iso.18013.5.1.mDL",
+    "namespaces": [
+        {
+          "io.affinitiquest.consultantcard.1": {
+            "name": {
+              "family_name": "Gallagher",
+              "given_name": "Warren"
+            },
+            "email": "warren@gallaghers.ca"
+          }
         },
-        "org.iso.18013.5.1.aamva": {
-            "domestic_driving_privileges":[
+        {
+          "org.iso.18013.5.1": {
+              "family_name":"Tkachuk",
+              "given_name":"Brady",
+              "birth_date":"1999-09-16",
+              "issue_date":"2023-09-16",
+              "expiry_date":"2028-09-16",
+              "issuing_country":"CA",
+              "issuing_authority":"ON MTO",
+              "document_number":"Gxxxx xxxxx xxxxx",
+              "portrait":"",
+              "driving_privileges":[
                 {
-                  "domestic_vehicle_class":{
-                    "domestic_vehicle_class_code":"G",
-                    "domestic_vehicle_class_description":"unknown",
-                    "issue_date":"2023-09-16",
-                    "expiry_date":"2028-09-16"
-                  }
-                }
-            ],
-              "name_suffix":"1ST",
-              "organ_donor":1,
-              "veteran":1,
-              "family_name_truncation":"N",
-              "given_name_truncation":"N",
-              "aka_family_name.v2":"Tkachuk",
-              "aka_given_name.v2":"Brady",
-              "aka_suffix":"I",
-              "weight_range":3,
-              "race_ethnicity":"W",
-              "EDL_credential":1,
+                  "vehicle_category_code":"G",
+                  "issue_date":"2023-09-16",
+                  "expiry_date":"2028-09-16"
+                }            
+              ],
+              "un_distinguishing_sign":"CAN",
+              "administrative_number":"ABC123",
               "sex":1,
-              "DHS_compliance":"F",
-              "resident_county":"001",
-              "hazmat_endorsement_expiration_date":"2024-01-30",
-              "CDL_indicator":1,
-              "DHS_compliance_text":"Compliant",
-              "DHS_temporary_lawful_status":1
-        }
-    }
+              "height":193,
+              "weight":100,
+              "eye_colour":"blue",
+              "hair_colour":"brown",
+              "birth_place":"Canada",
+              "resident_address":"1000 Palladium Drive",
+              "portrait_capture_date":"2020-01-01T12:00:00Z",
+              "age_in_years":24,
+              "age_birth_year":1999,
+              "age_over_18":true,
+              "age_over_21":true,
+              "issuing_jurisdiction":"CA-ON",
+              "nationality":"US",
+              "resident_city":"Ottawa",
+              "resident_state":"Ontario",
+              "resident_postal_code":"K2V 1A5",
+              "resident_country": "CA"
+          }
+        },
+        {
+          "org.iso.18013.5.1.aamva": {
+              "domestic_driving_privileges":[
+                  {
+                    "domestic_vehicle_class":{
+                      "domestic_vehicle_class_code":"G",
+                      "domestic_vehicle_class_description":"unknown",
+                      "issue_date":"2023-09-16",
+                      "expiry_date":"2028-09-16"
+                    }
+                  }
+              ],
+                "name_suffix":"1ST",
+                "organ_donor":1,
+                "veteran":1,
+                "family_name_truncation":"N",
+                "given_name_truncation":"N",
+                "aka_family_name.v2":"Tkachuk",
+                "aka_given_name.v2":"Brady",
+                "aka_suffix":"I",
+                "weight_range":3,
+                "race_ethnicity":"W",
+                "EDL_credential":1,
+                "sex":1,
+                "DHS_compliance":"F",
+                "resident_county":"001",
+                "hazmat_endorsement_expiration_date":"2024-01-30",
+                "CDL_indicator":1,
+                "DHS_compliance_text":"Compliant",
+                "DHS_temporary_lawful_status":1
+          }
+      }
+    ]
 }

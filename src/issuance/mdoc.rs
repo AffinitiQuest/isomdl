@@ -455,7 +455,7 @@ pub mod aq_issue {
     use super::*;
     use crate::definitions::device_key::cose_key::{CoseKey, EC2Curve, EC2Y};
     use crate::definitions::namespaces::{
-        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva,
+        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva
     };
 
     use crate::definitions::traits::{FromJson, ToNamespaceMap};
@@ -470,29 +470,66 @@ pub mod aq_issue {
     use anyhow::{Context, Error} ;
     use crate::presentation::device::Document;
     use crate::presentation::Stringify;
+    use serde_json::Value as JsonValue;
+    use serde_cbor::Value as CborValue;
+    // use std::any::Any;
 
     static ISSUER_CERT: &[u8] = include_bytes!("../../test/issuance/issuer-cert.pem");
     static ISSUER_KEY: &str = include_str!("../../test/issuance/issuer-key.pem");
 
-    pub fn aq_issue(isomdl_data: &serde_json::Value, aamva_isomdl_data: &serde_json::Value, mut output_buffer: BufWriter<Box<dyn Write>>) ->Result<String,Error> {
-        let doc_type = String::from("org.iso.18013.5.1.mDL");
-        let isomdl_namespace = String::from("org.iso.18013.5.1");
-        let aamva_namespace = String::from("org.iso.18013.5.1.aamva");
+    pub fn aq_issue(parsed_json: &serde_json::Value, mut output_buffer: BufWriter<Box<dyn Write>>) ->Result<String,Error> {
+        let isomdl_namespace = &String::from("org.iso.18013.5.1");
+        let aamva_namespace = &String::from("org.iso.18013.5.1.aamva");
+        // let consultantcard_namespace = String::from("io.affinitiquest.consultantcard.1");
+        let doc_type: &JsonValue = &parsed_json["doc_type"];
+        let doc_type_string = doc_type.as_str().unwrap().to_string();
+        let ns_array = &parsed_json["namespaces"];
+        let ns_arr = ns_array.as_array().unwrap();
+        let mut namespaces: BTreeMap<String, BTreeMap<String,CborValue>> = BTreeMap::new();
+        for ns in ns_arr{
+           let o = ns.as_object().unwrap();
+           let keys = o.keys();
+           for key in keys {
+                let namespace_name = key;//.to_string();
+                let val = o.get(key).unwrap();
+                if namespace_name == isomdl_namespace {
+                    println!("Processing ISO mDL Namespace");
+                    let isomdl_data = OrgIso1801351::from_json(&val)
+                        .unwrap()
+                        .to_ns_map();
+                    namespaces.insert(isomdl_namespace.clone(), isomdl_data);
+                }
+                else if namespace_name == aamva_namespace {
+                    println!("Processing AAMVA Namespace");
+                    let aamva_data = OrgIso1801351Aamva::from_json(&val)
+                        .unwrap()
+                        .to_ns_map();
+                    namespaces.insert(aamva_namespace.clone(), aamva_data);
+                }
+                else {
+                    println!("Processing namespace = '{}'", namespace_name);
+                    // let consultantcard_data = ConsultantCard::from_json(&val)
+                    //     .unwrap()
+                    //     .to_ns_map();
+                    // namespaces.insert(namespace_name.clone(), consultantcard_data);
+                }
+           }
+        }
+        
+        // let consultant_card_parsed_json: &JsonValue = &ns_array["io.affinitiquest.consultantcard.1"];
 
-        let isomdl_data = OrgIso1801351::from_json(isomdl_data)
-            .unwrap()
-            .to_ns_map();
-        let aamva_data = OrgIso1801351Aamva::from_json(aamva_isomdl_data)
-            .unwrap()
-            .to_ns_map();
+        // if Some(&isomdl_data).is_some() {
+        //     namespaces.insert(isomdl_namespace, isomdl_data);
+        // }
 
-        let namespaces = [
-            (isomdl_namespace, isomdl_data),
-            (aamva_namespace, aamva_data),
-        ]
-        .into_iter()
-        .collect();
+        // if Some(&aamva_isomdl_data).is_some() {
+        //     namespaces.insert(aamva_namespace, aamva_data);
+        // }
 
+        // if Some(&consultantcard_data).is_some() {
+        //     namespaces.insert(consultantcard_namespace, consultantcard_data);
+        // }
+        
         let validity_info = ValidityInfo {
             signed: OffsetDateTime::now_utc(),
             valid_from: OffsetDateTime::now_utc(),
@@ -522,7 +559,7 @@ pub mod aq_issue {
         };
 
         let mdoc_builder = Mdoc::builder()
-            .doc_type(doc_type)
+            .doc_type(doc_type_string)
             .namespaces(namespaces)
             .validity_info(validity_info)
             .digest_algorithm(digest_algorithm)
