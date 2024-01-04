@@ -477,10 +477,55 @@ pub mod aq_issue {
     static ISSUER_CERT: &[u8] = include_bytes!("../../test/issuance/issuer-cert.pem");
     static ISSUER_KEY: &str = include_str!("../../test/issuance/issuer-key.pem");
 
+    fn convert_primitive_json_to_cbor(parsed_json: &serde_json::Value) ->Result<CborValue, Error> {
+        match parsed_json {
+            serde_json::Value::String(s) => {
+                let cbor = crate::issuance::mdoc::CborValue::Text(s.to_string());
+                Ok(cbor)
+            }
+            serde_json::Value::Number(n) => {
+                let cbor = crate::issuance::mdoc::CborValue::Float(n.as_f64().unwrap());
+                Ok(cbor)
+            }
+            serde_json::Value::Bool(b) => {
+                let cbor = crate::issuance::mdoc::CborValue::Bool(*b);
+                Ok(cbor)
+            }
+            serde_json::Value::Null => {
+                let cbor = crate::issuance::mdoc::CborValue::Null;
+                Ok(cbor)
+            }
+            _ => {
+                Ok(crate::issuance::mdoc::CborValue::Null)
+            }
+        }
+    }
+    fn convert_json_to_cbor( parsed_json: &serde_json::Value ) -> Result<BTreeMap<std::string::String, serde_cbor::Value>,Error> {
+        let result: BTreeMap<std::string::String, serde_cbor::Value> = BTreeMap::new();
+        match parsed_json {
+            serde_json::Value::Object(o) => {
+                let mut map: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
+                for (k, v) in o {
+                    let cbor_obj = convert_primitive_json_to_cbor(v);
+                    map.insert(k.clone(), cbor_obj.unwrap());
+                }
+                //result.insert(String::from(""), map);
+                Ok(map)
+            }
+            serde_json::Value::Array(_a) => {
+                let _cbor = crate::issuance::mdoc::CborValue::Null;
+                Ok(result)
+            }
+            _ => {
+            //     let cbor = convert_primitive_json_to_cbor(parsed_json);
+                Ok(result)
+            }
+        }
+    }
+
     pub fn aq_issue(parsed_json: &serde_json::Value, mut output_buffer: BufWriter<Box<dyn Write>>) ->Result<String,Error> {
         let isomdl_namespace = &String::from("org.iso.18013.5.1");
         let aamva_namespace = &String::from("org.iso.18013.5.1.aamva");
-        // let consultantcard_namespace = String::from("io.affinitiquest.consultantcard.1");
         let doc_type: &JsonValue = &parsed_json["doc_type"];
         let doc_type_string = doc_type.as_str().unwrap().to_string();
         let ns_array = &parsed_json["namespaces"];
@@ -494,42 +539,23 @@ pub mod aq_issue {
                 let val = o.get(key).unwrap();
                 if namespace_name == isomdl_namespace {
                     println!("Processing ISO mDL Namespace");
-                    let isomdl_data = OrgIso1801351::from_json(&val)
-                        .unwrap()
-                        .to_ns_map();
+                    let isomdl_data = OrgIso1801351::from_json(&val).unwrap().to_ns_map();
                     namespaces.insert(isomdl_namespace.clone(), isomdl_data);
                 }
                 else if namespace_name == aamva_namespace {
                     println!("Processing AAMVA Namespace");
-                    let aamva_data = OrgIso1801351Aamva::from_json(&val)
-                        .unwrap()
-                        .to_ns_map();
+                    let aamva_data = OrgIso1801351Aamva::from_json(&val).unwrap().to_ns_map();
                     namespaces.insert(aamva_namespace.clone(), aamva_data);
                 }
                 else {
                     println!("Processing namespace = '{}'", namespace_name);
-                    // let consultantcard_data = ConsultantCard::from_json(&val)
-                    //     .unwrap()
-                    //     .to_ns_map();
-                    // namespaces.insert(namespace_name.clone(), consultantcard_data);
+                    let data = convert_json_to_cbor(&val).unwrap();
+                    // let consultantcard_data = ConsultantCard::from_json(&val).unwrap().to_ns_map();
+                    namespaces.insert(namespace_name.clone(), data);
                 }
            }
         }
-        
-        // let consultant_card_parsed_json: &JsonValue = &ns_array["io.affinitiquest.consultantcard.1"];
-
-        // if Some(&isomdl_data).is_some() {
-        //     namespaces.insert(isomdl_namespace, isomdl_data);
-        // }
-
-        // if Some(&aamva_isomdl_data).is_some() {
-        //     namespaces.insert(aamva_namespace, aamva_data);
-        // }
-
-        // if Some(&consultantcard_data).is_some() {
-        //     namespaces.insert(consultantcard_namespace, consultantcard_data);
-        // }
-        
+               
         let validity_info = ValidityInfo {
             signed: OffsetDateTime::now_utc(),
             valid_from: OffsetDateTime::now_utc(),

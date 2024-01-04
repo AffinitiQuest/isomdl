@@ -3,10 +3,7 @@
     "namespaces": [
         {
           "io.affinitiquest.consultantcard.1": {
-            "name": {
-              "family_name": "Gallagher",
-              "given_name": "Warren"
-            },
+            "name": "Warren Gallagher",
             "email": "warren@gallaghers.ca"
           }
         },
