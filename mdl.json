@@ -4,7 +4,14 @@
         {
           "io.affinitiquest.consultantcard.1": {
             "name": "Warren Gallagher",
-            "email": "warren@gallaghers.ca"
+            "email": "warren@gallaghers.ca",
+            "age": 60,
+            "weight": 90.7,
+            "age_over_18": true,
+            "age_over_21": true,
+            "age_over_65": false,
+            "birth_date": "1963-02-04",
+            "expires": "2024-01-05T10:59:00Z"
           }
         },
         {

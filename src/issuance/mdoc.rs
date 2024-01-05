@@ -476,15 +476,59 @@ pub mod aq_issue {
 
     static ISSUER_CERT: &[u8] = include_bytes!("../../test/issuance/issuer-cert.pem");
     static ISSUER_KEY: &str = include_str!("../../test/issuance/issuer-key.pem");
+    use chrono::{DateTime, NaiveDate, Utc};
+    const BASE64_CONFIG: base64::Config = base64::Config::new(base64::CharacterSet::Standard, false);
 
     fn convert_primitive_json_to_cbor(parsed_json: &serde_json::Value) ->Result<CborValue, Error> {
         match parsed_json {
             serde_json::Value::String(s) => {
-                let cbor = crate::issuance::mdoc::CborValue::Text(s.to_string());
+                // let v = s.to_string();
+                //let datetime = DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%SZ");
+                let datetime = s.parse::<DateTime<Utc>>();
+                let cbor: CborValue;
+                if datetime.is_ok() {
+                    cbor = crate::issuance::mdoc::CborValue::Tag(0, Box::new(crate::issuance::mdoc::CborValue::Text(s.to_string())) );
+                }
+                else { 
+                    let date = NaiveDate::parse_from_str(s, "%Y-%m-%d");
+                    if date.is_ok() {
+                        cbor = crate::issuance::mdoc::CborValue::Tag(1004, Box::new(crate::issuance::mdoc::CborValue::Text(s.to_string())) );
+                    }
+                    else { 
+                        // only handle jpeg and jpeg2000
+                        if s.starts_with("data:image/jpeg;base64,") || s.starts_with("data:image/jp2;base64,") {
+                            let parts: Vec<&str> = s.split(',').collect();
+                            let decoded = base64::decode_config(parts[1], BASE64_CONFIG);
+                            if decoded.is_ok() { 
+                                cbor = crate::issuance::mdoc::CborValue::Bytes(decoded.unwrap());
+                            }
+                            else {
+                                let err = decoded.unwrap_err();
+                                eprintln!("EINVAL: Error processing image {:?}", err);
+                                std::process::exit(22);
+                            }
+                        }
+                        else { 
+                            cbor = crate::issuance::mdoc::CborValue::Text(s.to_string())
+                        }
+                    }
+                }
                 Ok(cbor)
             }
             serde_json::Value::Number(n) => {
-                let cbor = crate::issuance::mdoc::CborValue::Float(n.as_f64().unwrap());
+                n.as_f64();
+                let f = n.as_f64().unwrap();
+                let cbor: crate::issuance::mdoc::CborValue;
+                if f.fract() == 0.0 {
+                    // whole number, encode as Integer
+                    let i: i128 = f as i128;
+                    cbor = crate::issuance::mdoc::CborValue::Integer(i);
+
+                }
+                else { 
+                    // not a whole number encode as Float
+                    cbor = crate::issuance::mdoc::CborValue::Float(f);
+                }
                 Ok(cbor)
             }
             serde_json::Value::Bool(b) => {
@@ -507,6 +551,7 @@ pub mod aq_issue {
                 let mut map: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
                 for (k, v) in o {
                     let cbor_obj = convert_primitive_json_to_cbor(v);
+                    println!("Processing key {}", k);
                     map.insert(k.clone(), cbor_obj.unwrap());
                 }
                 //result.insert(String::from(""), map);

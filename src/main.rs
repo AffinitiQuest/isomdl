@@ -116,7 +116,7 @@ fn print_claims(mdl: String, mut output_buffer: BufWriter<Box<dyn Write>>) -> Re
             
             // println!("{}", serde_json::to_string_pretty(&key.1.into_inner())?);
             let string_value = convert_value_to_string(value);
-            if key_name != "portrait" {
+            if key_name != "portraits" {
                 writeln!(output_buffer, "  '{}': {}", key_name, string_value)
                     .context("Error writing to output file")?;
             }
@@ -134,8 +134,8 @@ fn convert_value_to_string(value: CborValue) -> String {
         CborValue::Text (v) => string_value=format!("'{}'", serde_cbor::value::from_value::<String>(serde_cbor::Value::Text(v)).unwrap()),
         CborValue::Bool (v) => string_value=format!("bool={}", serde_cbor::value::from_value::<bool>(serde_cbor::Value::Bool(v)).unwrap().to_string()),
         CborValue::Integer (v) => string_value=format!("int={}", serde_cbor::value::from_value::<u128>(serde_cbor::Value::Integer(v)).unwrap().to_string()),
-        CborValue::Float (v) => string_value=format!("int={}", serde_cbor::value::from_value::<f64>(serde_cbor::Value::Float(v)).unwrap().to_string()),
-        CborValue::Bytes (_v) => string_value=String::from("bytes"),
+        CborValue::Float (v) => string_value=format!("float={}", serde_cbor::value::from_value::<f64>(serde_cbor::Value::Float(v)).unwrap().to_string()),
+        CborValue::Bytes (_v) => string_value=format!("bytes len={}", _v.len()),
         CborValue::Array (_v) => {
             let mut s = String::from("[ ").to_owned();
             for val in _v {
