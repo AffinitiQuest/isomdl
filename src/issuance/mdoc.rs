@@ -455,7 +455,7 @@ pub mod aq_issue {
     use super::*;
     use crate::definitions::device_key::cose_key::{CoseKey, EC2Curve, EC2Y};
     use crate::definitions::namespaces::{
-        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva, org_iso_18013_5_1::TestStruct
+        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva, org_iso_18013_5_1::TestStruct, org_iso_18013_5_1::Name
     };
 
     use crate::definitions::traits::{FromJson, ToNamespaceMap};
@@ -514,21 +514,10 @@ pub mod aq_issue {
                 result.insert(json_key.clone(), cbor);
             }
             serde_json::Value::Number(n) => {
-                n.as_f64();
-                let f = n.as_f64().unwrap();
-                let cbor: crate::issuance::mdoc::CborValue;
-                if f.fract() == 0.0 {
-                    // whole number, encode as Integer
-                    let i: i128 = f as i128;
-                    cbor = crate::issuance::mdoc::CborValue::Integer(i);
-
-                }
-                else { 
-                    // not a whole number encode as Float
-                    cbor = crate::issuance::mdoc::CborValue::Float(f);
-                }
+                // if the json Number is a whole number then the CBOR type will be Integer, otherwise Float
+                let cbor = serde_cbor::value::to_value(n).unwrap();
                 result.insert(json_key.clone(), cbor);
-           }
+            }
             serde_json::Value::Bool(b) => {
                 let cbor = crate::issuance::mdoc::CborValue::Bool(*b);
                 result.insert(json_key.clone(), cbor);
@@ -538,16 +527,17 @@ pub mod aq_issue {
                 result.insert(json_key.clone(), cbor);
             }
             serde_json::Value::Object(o) => {
-                let mut map: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
-                for (k, v) in o {
-                    println!("Processing key {}", k);
-                    convert_json_kv_to_cbor(&mut map, k.clone(), v);
-                }
+                // let mut map: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
+                // for (k, v) in o {
+                //     println!("Processing key {}", k);
+                //     convert_json_kv_to_cbor(&mut map, k.clone(), v);
+                // }
                 // wlg this is where I get tripped up. The following doesn't work because:
                 //   * the parameter to create a CborValue::map must be a BTreeMap<CborValue, CborValue>
                 //   * what we actuall have is a BTreeMap<std::string::String, CborValue>
                 // let cbor = crate::issuance::mdoc::CborValue::Map(map);
-                let cbor = crate::issuance::mdoc::CborValue::Null;
+                // let cbor = crate::issuance::mdoc::CborValue::Null;
+                let cbor = serde_cbor::value::to_value(o).unwrap();
                 result.insert(json_key, cbor);
             }
             _ => {
@@ -580,6 +570,8 @@ pub mod aq_issue {
     }
 
     pub fn aq_issue(parsed_json: &serde_json::Value, mut output_buffer: BufWriter<Box<dyn Write>>) ->Result<String,Error> {
+        // let t =  TestStruct{ name: Name {first_name: "Warren".to_owned(), last_name: "Gallagher".to_owned()}, age: Some(42)};
+        // let v = serde_cbor::value::to_value(t).unwrap();
         let isomdl_namespace = &String::from("org.iso.18013.5.1");
         let aamva_namespace = &String::from("org.iso.18013.5.1.aamva");
         let test_namespace = &String::from("io.affinitiquest.test.1");

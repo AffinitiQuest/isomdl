@@ -151,8 +151,11 @@ fn convert_value_to_string(value: CborValue) -> String {
                 s.push_str(&convert_value_to_string(key));
                 s.push_str(": ");
                 s.push_str(&convert_value_to_string(val));
+                s.push_str(", ");
             }
-            s.push_str("}");
+            s.pop();
+            s.pop();
+            s.push_str(" }");
             string_value = s;
         },
         //string_value=String::from("{}"),//string_value=String::from(format!("{}", convert_value_to_string(serde_cbor::Value::Map(_v)))),

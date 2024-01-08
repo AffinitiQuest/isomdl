@@ -3,14 +3,16 @@
     "namespaces": [
         {
           "io.affinitiquest.consultantcard.1": {
-            "name": {
+            "info": {
                 "first_name": "Warren",
-                "last_name": "Gallagher"
+                "last_name": "Gallagher",
+                "age": 60,
+                "birth_date": "1963-02-04",
+                "expires": "2024-01-05T10:59:00Z",
+                "weight": 90.7,
+                "height": 193.04
             },
             "email": "warren@gallaghers.ca",
-            "age": 60,
-            "weight": 90.7,
-            "height": 193.04,
             "age_over_18": true,
             "age_over_21": true,
             "age_over_65": false,
