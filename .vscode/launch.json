@@ -62,6 +62,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug 'isomdl' issue-verify",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=isomdl",
+                    "--package=isomdl"
+                ],
+                "filter": {
+                    "name": "isomdl",
+                    "kind": "bin"
+                }
+            },
+            "args": ["issue-verify", "test.json"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in executable 'isomdl'",
             "cargo": {
                 "args": [

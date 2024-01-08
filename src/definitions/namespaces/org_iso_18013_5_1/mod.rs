@@ -27,6 +27,17 @@ use crate::{
     macros::{FromJson, ToCbor},
 };
 
+#[derive(Debug, Clone, FromJson, ToCbor)]
+pub struct Name { 
+  pub first_name: String,
+  pub last_name: String
+}
+
+#[derive(Debug, Clone, FromJson, ToCbor)]
+pub struct TestStruct { 
+  pub name: Name,
+  pub age: Option<u32>
+}
 /// The `org.iso.18013.5.1` namespace.
 #[derive(Debug, Clone, FromJson, ToCbor)]
 pub struct OrgIso1801351 {

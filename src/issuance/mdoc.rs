@@ -455,7 +455,7 @@ pub mod aq_issue {
     use super::*;
     use crate::definitions::device_key::cose_key::{CoseKey, EC2Curve, EC2Y};
     use crate::definitions::namespaces::{
-        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva
+        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva, org_iso_18013_5_1::TestStruct
     };
 
     use crate::definitions::traits::{FromJson, ToNamespaceMap};
@@ -479,11 +479,9 @@ pub mod aq_issue {
     use chrono::{DateTime, NaiveDate, Utc};
     const BASE64_CONFIG: base64::Config = base64::Config::new(base64::CharacterSet::Standard, false);
 
-    fn convert_primitive_json_to_cbor(parsed_json: &serde_json::Value) ->Result<CborValue, Error> {
-        match parsed_json {
+    fn convert_json_kv_to_cbor(result: &mut BTreeMap<std::string::String, serde_cbor::Value>, json_key: String, json_value: &serde_json::Value) {
+        match json_value {
             serde_json::Value::String(s) => {
-                // let v = s.to_string();
-                //let datetime = DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%SZ");
                 let datetime = s.parse::<DateTime<Utc>>();
                 let cbor: CborValue;
                 if datetime.is_ok() {
@@ -513,7 +511,7 @@ pub mod aq_issue {
                         }
                     }
                 }
-                Ok(cbor)
+                result.insert(json_key.clone(), cbor);
             }
             serde_json::Value::Number(n) => {
                 n.as_f64();
@@ -529,32 +527,45 @@ pub mod aq_issue {
                     // not a whole number encode as Float
                     cbor = crate::issuance::mdoc::CborValue::Float(f);
                 }
-                Ok(cbor)
-            }
+                result.insert(json_key.clone(), cbor);
+           }
             serde_json::Value::Bool(b) => {
                 let cbor = crate::issuance::mdoc::CborValue::Bool(*b);
-                Ok(cbor)
+                result.insert(json_key.clone(), cbor);
             }
             serde_json::Value::Null => {
                 let cbor = crate::issuance::mdoc::CborValue::Null;
-                Ok(cbor)
+                result.insert(json_key.clone(), cbor);
+            }
+            serde_json::Value::Object(o) => {
+                let mut map: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
+                for (k, v) in o {
+                    println!("Processing key {}", k);
+                    convert_json_kv_to_cbor(&mut map, k.clone(), v);
+                }
+                // wlg this is where I get tripped up. The following doesn't work because:
+                //   * the parameter to create a CborValue::map must be a BTreeMap<CborValue, CborValue>
+                //   * what we actuall have is a BTreeMap<std::string::String, CborValue>
+                let cbor = crate::issuance::mdoc::CborValue::Map(map);
+                //let cbor = crate::issuance::mdoc::CborValue::Null;
+                result.insert(json_key, cbor);
             }
             _ => {
-                Ok(crate::issuance::mdoc::CborValue::Null)
+                let cbor = crate::issuance::mdoc::CborValue::Null;
+                result.insert(json_key.clone(), cbor);
             }
         }
     }
+
     fn convert_json_to_cbor( parsed_json: &serde_json::Value ) -> Result<BTreeMap<std::string::String, serde_cbor::Value>,Error> {
-        let result: BTreeMap<std::string::String, serde_cbor::Value> = BTreeMap::new();
+        let result: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
         match parsed_json {
             serde_json::Value::Object(o) => {
                 let mut map: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
                 for (k, v) in o {
-                    let cbor_obj = convert_primitive_json_to_cbor(v);
                     println!("Processing key {}", k);
-                    map.insert(k.clone(), cbor_obj.unwrap());
+                    convert_json_kv_to_cbor(&mut map, k.clone(), v);
                 }
-                //result.insert(String::from(""), map);
                 Ok(map)
             }
             serde_json::Value::Array(_a) => {
@@ -571,6 +582,7 @@ pub mod aq_issue {
     pub fn aq_issue(parsed_json: &serde_json::Value, mut output_buffer: BufWriter<Box<dyn Write>>) ->Result<String,Error> {
         let isomdl_namespace = &String::from("org.iso.18013.5.1");
         let aamva_namespace = &String::from("org.iso.18013.5.1.aamva");
+        let test_namespace = &String::from("io.affinitiquest.test.1");
         let doc_type: &JsonValue = &parsed_json["doc_type"];
         let doc_type_string = doc_type.as_str().unwrap().to_string();
         let ns_array = &parsed_json["namespaces"];
@@ -591,6 +603,11 @@ pub mod aq_issue {
                     println!("Processing AAMVA Namespace");
                     let aamva_data = OrgIso1801351Aamva::from_json(&val).unwrap().to_ns_map();
                     namespaces.insert(aamva_namespace.clone(), aamva_data);
+                }
+                else if namespace_name == test_namespace { 
+                    println!("Processing Test Namespace");
+                    let test_data = TestStruct::from_json(&val).unwrap().to_ns_map();
+                    namespaces.insert(test_namespace.clone(), test_data);
                 }
                 else {
                     println!("Processing namespace = '{}'", namespace_name);

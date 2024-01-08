@@ -130,7 +130,7 @@ fn print_claims(mdl: String, mut output_buffer: BufWriter<Box<dyn Write>>) -> Re
 fn convert_value_to_string(value: CborValue) -> String {
     let string_value;
     match value {
-        CborValue::Null => string_value=String::from(""),
+        CborValue::Null => string_value=String::from("NULL"),
         CborValue::Text (v) => string_value=format!("'{}'", serde_cbor::value::from_value::<String>(serde_cbor::Value::Text(v)).unwrap()),
         CborValue::Bool (v) => string_value=format!("bool={}", serde_cbor::value::from_value::<bool>(serde_cbor::Value::Bool(v)).unwrap().to_string()),
         CborValue::Integer (v) => string_value=format!("int={}", serde_cbor::value::from_value::<u128>(serde_cbor::Value::Integer(v)).unwrap().to_string()),

@@ -1,0 +1,14 @@
+{
+    "doc_type": "org.iso.18013.5.1.mDL",
+    "namespaces": [
+        {
+          "io.affinitiquest.test.1": {
+            "name": {
+                "first_name": "Warren",
+                "last_name": "Gallagher"
+            },
+            "age": 60
+          }
+        }
+    ]
+}
