@@ -546,8 +546,8 @@ pub mod aq_issue {
                 // wlg this is where I get tripped up. The following doesn't work because:
                 //   * the parameter to create a CborValue::map must be a BTreeMap<CborValue, CborValue>
                 //   * what we actuall have is a BTreeMap<std::string::String, CborValue>
-                let cbor = crate::issuance::mdoc::CborValue::Map(map);
-                //let cbor = crate::issuance::mdoc::CborValue::Null;
+                // let cbor = crate::issuance::mdoc::CborValue::Map(map);
+                let cbor = crate::issuance::mdoc::CborValue::Null;
                 result.insert(json_key, cbor);
             }
             _ => {
