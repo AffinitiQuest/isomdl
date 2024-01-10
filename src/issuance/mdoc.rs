@@ -455,7 +455,7 @@ pub mod aq_issue {
     use super::*;
     use crate::definitions::device_key::cose_key::{CoseKey, EC2Curve, EC2Y};
     use crate::definitions::namespaces::{
-        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva, org_iso_18013_5_1::TestStruct, org_iso_18013_5_1::Name
+        org_iso_18013_5_1::OrgIso1801351, org_iso_18013_5_1_aamva::OrgIso1801351Aamva, org_iso_18013_5_1::TestStruct
     };
 
     use crate::definitions::traits::{FromJson, ToNamespaceMap};
@@ -477,9 +477,9 @@ pub mod aq_issue {
     static ISSUER_CERT: &[u8] = include_bytes!("../../test/issuance/issuer-cert.pem");
     static ISSUER_KEY: &str = include_str!("../../test/issuance/issuer-key.pem");
     use chrono::{DateTime, NaiveDate, Utc};
-    const BASE64_CONFIG: base64::Config = base64::Config::new(base64::CharacterSet::Standard, false);
+    const _BASE64_CONFIG: base64::Config = base64::Config::new(base64::CharacterSet::Standard, false);
 
-    fn convert_json_kv_to_cbor(result: &mut BTreeMap<std::string::String, serde_cbor::Value>, json_key: String, json_value: &serde_json::Value) {
+    fn _convert_json_kv_to_cbor(result: &mut BTreeMap<std::string::String, serde_cbor::Value>, json_key: String, json_value: &serde_json::Value) {
         match json_value {
             serde_json::Value::String(s) => {
                 let datetime = s.parse::<DateTime<Utc>>();
@@ -496,7 +496,7 @@ pub mod aq_issue {
                         // only handle jpeg and jpeg2000
                         if s.starts_with("data:image/jpeg;base64,") || s.starts_with("data:image/jp2;base64,") {
                             let parts: Vec<&str> = s.split(',').collect();
-                            let decoded = base64::decode_config(parts[1], BASE64_CONFIG);
+                            let decoded = base64::decode_config(parts[1], _BASE64_CONFIG);
                             if decoded.is_ok() { 
                                 cbor = crate::issuance::mdoc::CborValue::Bytes(decoded.unwrap());
                             }
@@ -547,31 +547,117 @@ pub mod aq_issue {
         }
     }
 
-    fn convert_json_to_cbor( parsed_json: &serde_json::Value ) -> Result<BTreeMap<std::string::String, serde_cbor::Value>,Error> {
-        let result: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
-        match parsed_json {
-            serde_json::Value::Object(o) => {
-                let mut map: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
-                for (k, v) in o {
-                    println!("Processing key {}", k);
-                    convert_json_kv_to_cbor(&mut map, k.clone(), v);
+
+    fn _postprocess_cbor_text_fields( cbor_parent: &CborValue, key: &String, cbor_value: &CborValue ) {
+        match cbor_value {
+            serde_cbor::Value::Text(t) => {
+                let datetime = t.parse::<DateTime<Utc>>();
+                let _cbor: CborValue;
+                println!("Processing CborValue::Text {} for key {}", t, key);
+                if datetime.is_ok() {
+                    _cbor = crate::issuance::mdoc::CborValue::Tag(0, Box::new(crate::issuance::mdoc::CborValue::Text(t.to_string())) );
                 }
-                Ok(map)
+                else { 
+                    let date = NaiveDate::parse_from_str(t, "%Y-%m-%d");
+                    if date.is_ok() {
+                        _cbor = crate::issuance::mdoc::CborValue::Tag(1004, Box::new(crate::issuance::mdoc::CborValue::Text(t.to_string())) );
+                    }
+                    else { 
+                        // only handle jpeg and jpeg2000
+                        if t.starts_with("data:image/jpeg;base64,") || t.starts_with("data:image/jp2;base64,") {
+                            let parts: Vec<&str> = t.split(',').collect();
+                            let decoded = base64::decode_config(parts[1], _BASE64_CONFIG);
+                            if decoded.is_ok() { 
+                                _cbor = crate::issuance::mdoc::CborValue::Bytes(decoded.unwrap());
+                            }
+                            else {
+                                let err = decoded.unwrap_err();
+                                eprintln!("EINVAL: Error processing image {:?}", err);
+                                std::process::exit(22);
+                            }
+                        }
+                        else { 
+                            _cbor = crate::issuance::mdoc::CborValue::Text(t.to_string())
+                        }
+                    }
+                }
+                match cbor_parent {
+                    serde_cbor::Value::Map(_m) => {
+                        // WLG - the following doesn't work because the map we receive is immutable
+                        //_m.insert(serde_cbor::Value::Text(key.to_string()), _cbor);
+                    }
+                    serde_cbor::Value::Array(_a) => {
+
+                    }
+                    _ => {
+
+                    }
+                }
+                //result.insert(json_key.clone(), cbor);
             }
-            serde_json::Value::Array(_a) => {
-                let _cbor = crate::issuance::mdoc::CborValue::Null;
-                Ok(result)
+            serde_cbor::Value::Bool(_b) => {
+
             }
-            _ => {
-            //     let cbor = convert_primitive_json_to_cbor(parsed_json);
-                Ok(result)
+            serde_cbor::Value::Null => {
+
+            }
+            serde_cbor::Value::Integer(_i) => {
+
+            }
+            serde_cbor::Value::Float(_f) => {
+
+            }
+            serde_cbor::Value::Bytes(_b) => {
+
+            }
+            serde_cbor::Value::__Hidden => {
+
+            }
+            serde_cbor::Value::Tag(_t, _v) => {
+
+            }
+            serde_cbor::Value::Array(_a) => {
+                for _val in _a {
+                    _postprocess_cbor_text_fields(cbor_value, &String::from(""), _val);
+                }
+            }
+            serde_cbor::Value::Map(_m) => {
+                for (_key, _val) in _m {
+                    _postprocess_cbor_text_fields(cbor_value, &serde_cbor::value::from_value::<String>(_key.clone()).unwrap(), _val);
+                }
             }
         }
     }
+    fn convert_json_to_cbor( parsed_json: &serde_json::Value ) -> Result<BTreeMap<std::string::String, serde_cbor::Value>,Error> {
+        let mut result: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
+        let cbor_parent = serde_cbor::value::to_value(parsed_json).unwrap();
+        // postprocess_cbor_text_fields(&cbor_parent, &String::from(""), &cbor_parent);
+        result.insert(String::from("claims"), cbor_parent);
+
+        Ok(result)
+        // match parsed_json {
+        //     serde_json::Value::Object(o) => {
+        //         let mut map: BTreeMap<std::string::String, CborValue> = BTreeMap::new();
+        //         for (k, v) in o {
+        //             println!("Processing key {}", k);
+        //             // convert_json_kv_to_cbor(&mut map, k.clone(), v);
+        //             let cbor = serde_cbor::value::to_value(v).unwrap();
+        //             map.insert(k.to_string(), cbor);
+        //         }
+        //         Ok(map)
+        //     }
+        //     serde_json::Value::Array(_a) => {
+        //         let _cbor = crate::issuance::mdoc::CborValue::Null;
+        //         Ok(result)
+        //     }
+        //     _ => {
+        //     //     let cbor = convert_primitive_json_to_cbor(parsed_json);
+        //         Ok(result)
+        //     }
+        // }
+    }
 
     pub fn aq_issue(parsed_json: &serde_json::Value, mut output_buffer: BufWriter<Box<dyn Write>>) ->Result<String,Error> {
-        // let t =  TestStruct{ name: Name {first_name: "Warren".to_owned(), last_name: "Gallagher".to_owned()}, age: Some(42)};
-        // let v = serde_cbor::value::to_value(t).unwrap();
         let isomdl_namespace = &String::from("org.iso.18013.5.1");
         let aamva_namespace = &String::from("org.iso.18013.5.1.aamva");
         let test_namespace = &String::from("io.affinitiquest.test.1");
@@ -604,7 +690,6 @@ pub mod aq_issue {
                 else {
                     println!("Processing namespace = '{}'", namespace_name);
                     let data = convert_json_to_cbor(&val).unwrap();
-                    // let consultantcard_data = ConsultantCard::from_json(&val).unwrap().to_ns_map();
                     namespaces.insert(namespace_name.clone(), data);
                 }
            }
